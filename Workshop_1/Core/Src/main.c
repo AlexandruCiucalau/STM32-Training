@@ -53,7 +53,7 @@
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 /* USER CODE BEGIN PFP */
-
+void ChristmasLights(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -175,20 +175,20 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void ChristmasLights()
+void ChristmasLights(void)
 {
-	 HAL_GPIO_WritePin(GPIOD, LED1, GPIO_PIN_SET);
-	 HAL_Delay(250);
-	 HAL_GPIO_WritePin(GPIOD, LED1, GPIO_PIN_RESET);
-	 HAL_GPIO_WritePin(GPIOD, LED2, GPIO_PIN_SET);
-	 HAL_Delay(250);
-	 HAL_GPIO_WritePin(GPIOD, LED2, GPIO_PIN_RESET);
-	 HAL_GPIO_WritePin(GPIOD, LED3, GPIO_PIN_SET);
-	 HAL_Delay(250);
-	 HAL_GPIO_WritePin(GPIOD, LED3, GPIO_PIN_RESET);
-	 HAL_GPIO_WritePin(GPIOD, LED4, GPIO_PIN_SET);
-     HAL_Delay(250);
-     HAL_GPIO_WritePin(GPIOD, LED4, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOD, LED1, GPIO_PIN_SET);
+	HAL_Delay(250);
+	HAL_GPIO_WritePin(GPIOD, LED1, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOD, LED2, GPIO_PIN_SET);
+	HAL_Delay(250);
+	HAL_GPIO_WritePin(GPIOD, LED2, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOD, LED3, GPIO_PIN_SET);
+	HAL_Delay(250);
+	HAL_GPIO_WritePin(GPIOD, LED3, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOD, LED4, GPIO_PIN_SET);
+  HAL_Delay(250);
+  HAL_GPIO_WritePin(GPIOD, LED4, GPIO_PIN_RESET);
 }
 /* USER CODE END 4 */
 
