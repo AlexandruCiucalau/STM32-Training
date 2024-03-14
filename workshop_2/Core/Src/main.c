@@ -108,7 +108,6 @@ int main(void)
 	  break;
 	  case 3: LED_Scheme_4();
 	  break;
-
 	  }
     /* USER CODE END WHILE */
 
@@ -190,8 +189,8 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
+HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
@@ -201,21 +200,21 @@ static void MX_GPIO_Init(void)
 void LED_Scheme_1(void)
 {
 	// Not clockwise pattern
-    HAL_GPIO_WritePin(GPIOD, LED_RED_Pin, GPIO_PIN_SET);
-    HAL_Delay(LED_SWITCH_DELAY);
-    HAL_GPIO_WritePin(GPIOD, LED_RED_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, LED_RED_Pin, GPIO_PIN_SET);
+  HAL_Delay(LED_SWITCH_DELAY);
+  HAL_GPIO_WritePin(GPIOD, LED_RED_Pin, GPIO_PIN_RESET);
 
-    HAL_GPIO_WritePin(GPIOD, LED_ORANGE_Pin, GPIO_PIN_SET);
-    HAL_Delay(LED_SWITCH_DELAY);
-    HAL_GPIO_WritePin(GPIOD, LED_ORANGE_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, LED_ORANGE_Pin, GPIO_PIN_SET);
+  HAL_Delay(LED_SWITCH_DELAY);
+  HAL_GPIO_WritePin(GPIOD, LED_ORANGE_Pin, GPIO_PIN_RESET);
 
-    HAL_GPIO_WritePin(GPIOD, LED_GREEN_Pin, GPIO_PIN_SET);
-    HAL_Delay(LED_SWITCH_DELAY);
-    HAL_GPIO_WritePin(GPIOD, LED_GREEN_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, LED_GREEN_Pin, GPIO_PIN_SET);
+  HAL_Delay(LED_SWITCH_DELAY);
+  HAL_GPIO_WritePin(GPIOD, LED_GREEN_Pin, GPIO_PIN_RESET);
 
-    HAL_GPIO_WritePin(GPIOD, LED_BLUE_Pin, GPIO_PIN_SET);
-    HAL_Delay(LED_SWITCH_DELAY);
-    HAL_GPIO_WritePin(GPIOD, LED_BLUE_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, LED_BLUE_Pin, GPIO_PIN_SET);
+  HAL_Delay(LED_SWITCH_DELAY);
+  HAL_GPIO_WritePin(GPIOD, LED_BLUE_Pin, GPIO_PIN_RESET);
 }
 void LED_Scheme_2(void)
 {
@@ -238,32 +237,31 @@ void LED_Scheme_2(void)
 }
 void LED_Scheme_3(void)
 {
-    // Pattern 1: Red and Blue on
-    HAL_GPIO_WritePin(GPIOD, LED_RED_Pin, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(GPIOD, LED_BLUE_Pin, GPIO_PIN_SET);
-    HAL_Delay(LED_SWITCH_DELAY);
-    HAL_GPIO_WritePin(GPIOD, LED_RED_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(GPIOD, LED_BLUE_Pin, GPIO_PIN_RESET);
-    HAL_Delay(LED_SWITCH_DELAY);
+  // Pattern 1: Red and Blue on
+  HAL_GPIO_WritePin(GPIOD, LED_RED_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOD, LED_BLUE_Pin, GPIO_PIN_SET);
+  HAL_Delay(LED_SWITCH_DELAY);
+  HAL_GPIO_WritePin(GPIOD, LED_RED_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, LED_BLUE_Pin, GPIO_PIN_RESET);
+  HAL_Delay(LED_SWITCH_DELAY);
 
-    // Pattern 2: Green and Orange on
-    HAL_GPIO_WritePin(GPIOD, LED_GREEN_Pin, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(GPIOD, LED_ORANGE_Pin, GPIO_PIN_SET);
-    HAL_Delay(LED_SWITCH_DELAY);
-    HAL_GPIO_WritePin(GPIOD, LED_GREEN_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(GPIOD, LED_ORANGE_Pin, GPIO_PIN_RESET);
-    HAL_Delay(LED_SWITCH_DELAY);
+  // Pattern 2: Green and Orange on
+  HAL_GPIO_WritePin(GPIOD, LED_GREEN_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOD, LED_ORANGE_Pin, GPIO_PIN_SET);
+  HAL_Delay(LED_SWITCH_DELAY);
+  HAL_GPIO_WritePin(GPIOD, LED_GREEN_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, LED_ORANGE_Pin, GPIO_PIN_RESET);
+  HAL_Delay(LED_SWITCH_DELAY);
 }
 void LED_Scheme_4(void)
 {
 	// All LEDs on
-    HAL_GPIO_WritePin(GPIOD, LED_RED_Pin | LED_GREEN_Pin | LED_BLUE_Pin | LED_ORANGE_Pin, GPIO_PIN_SET);
-    HAL_Delay(LED_SWITCH_DELAY);
+  HAL_GPIO_WritePin(GPIOD, LED_RED_Pin | LED_GREEN_Pin | LED_BLUE_Pin | LED_ORANGE_Pin, GPIO_PIN_SET);
+  HAL_Delay(LED_SWITCH_DELAY);
 
-    // All LEDs off
-    HAL_GPIO_WritePin(GPIOD, LED_RED_Pin | LED_GREEN_Pin | LED_BLUE_Pin | LED_ORANGE_Pin, GPIO_PIN_RESET);
-    HAL_Delay(LED_SWITCH_DELAY);
-
+  // All LEDs off
+  HAL_GPIO_WritePin(GPIOD, LED_RED_Pin | LED_GREEN_Pin | LED_BLUE_Pin | LED_ORANGE_Pin, GPIO_PIN_RESET);
+  HAL_Delay(LED_SWITCH_DELAY);
 }
 /* USER CODE END 4 */
 
