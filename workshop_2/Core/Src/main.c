@@ -199,7 +199,7 @@ HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 /* USER CODE BEGIN 4 */
 void LED_Scheme_1(void)
 {
-	// Not clockwise pattern
+  // Not clockwise pattern
   HAL_GPIO_WritePin(GPIOD, LED_RED_Pin, GPIO_PIN_SET);
   HAL_Delay(LED_SWITCH_DELAY);
   HAL_GPIO_WritePin(GPIOD, LED_RED_Pin, GPIO_PIN_RESET);
@@ -218,22 +218,22 @@ void LED_Scheme_1(void)
 }
 void LED_Scheme_2(void)
 {
-	// Clockwise pattern
-	HAL_GPIO_WritePin(GPIOD, LED_RED_Pin, GPIO_PIN_SET);
-	HAL_Delay(LED_SWITCH_DELAY);
-	HAL_GPIO_WritePin(GPIOD, LED_RED_Pin, GPIO_PIN_RESET);
+  // Clockwise pattern
+  HAL_GPIO_WritePin(GPIOD, LED_RED_Pin, GPIO_PIN_SET);
+  HAL_Delay(LED_SWITCH_DELAY);
+  HAL_GPIO_WritePin(GPIOD, LED_RED_Pin, GPIO_PIN_RESET);
 
-	HAL_GPIO_WritePin(GPIOD, LED_BLUE_Pin, GPIO_PIN_SET);
-	HAL_Delay(LED_SWITCH_DELAY);
-	HAL_GPIO_WritePin(GPIOD, LED_BLUE_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, LED_BLUE_Pin, GPIO_PIN_SET);
+  HAL_Delay(LED_SWITCH_DELAY);
+  HAL_GPIO_WritePin(GPIOD, LED_BLUE_Pin, GPIO_PIN_RESET);
 
-	HAL_GPIO_WritePin(GPIOD, LED_GREEN_Pin, GPIO_PIN_SET);
-	HAL_Delay(LED_SWITCH_DELAY);
-	HAL_GPIO_WritePin(GPIOD, LED_GREEN_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, LED_GREEN_Pin, GPIO_PIN_SET);
+  HAL_Delay(LED_SWITCH_DELAY);
+  HAL_GPIO_WritePin(GPIOD, LED_GREEN_Pin, GPIO_PIN_RESET);
 
-	HAL_GPIO_WritePin(GPIOD, LED_ORANGE_Pin, GPIO_PIN_SET);
-	HAL_Delay(LED_SWITCH_DELAY);
-	HAL_GPIO_WritePin(GPIOD, LED_ORANGE_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, LED_ORANGE_Pin, GPIO_PIN_SET);
+  HAL_Delay(LED_SWITCH_DELAY);
+  HAL_GPIO_WritePin(GPIOD, LED_ORANGE_Pin, GPIO_PIN_RESET);
 }
 void LED_Scheme_3(void)
 {
@@ -255,7 +255,7 @@ void LED_Scheme_3(void)
 }
 void LED_Scheme_4(void)
 {
-	// All LEDs on
+  // All LEDs on
   HAL_GPIO_WritePin(GPIOD, LED_RED_Pin | LED_GREEN_Pin | LED_BLUE_Pin | LED_ORANGE_Pin, GPIO_PIN_SET);
   HAL_Delay(LED_SWITCH_DELAY);
 
