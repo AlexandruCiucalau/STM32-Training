@@ -42,7 +42,6 @@
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
 extern TIM_HandleTypeDef htim4;
-extern unsigned int freqVal ;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -208,9 +207,10 @@ void EXTI0_IRQHandler(void)
 	//variable to count desired Frequency (in kHz)
 	static uint8_t Freq = 5;
 	uint16_t aux = 0;
+	
 	Freq += 5;
 
-	if(Freq > 100)
+	if(Freq >= 105)
 	{
 		Freq = 5;
 	}
@@ -222,7 +222,7 @@ void EXTI0_IRQHandler(void)
     if ((current_time - last_interrupt_time) > 200) {
         Freq+=5;
 
-        if (Freq >= 105) {
+        if (Freq >= 105) { // It keeps getting stuck at 40kHz
             Freq = 5;
         }
     }
@@ -235,68 +235,7 @@ void EXTI0_IRQHandler(void)
     aux = aux / 2;
     aux = aux - 1;
     htim4.Instance->ARR = aux;
-    // Hardcoded implementation (Freq would have other values 0 - 19)
-    /*if(Freq == 0)
-    {
-    	htim4.Instance->ARR = 799;
-    }else if(Freq == 1)
-    {
-    	htim4.Instance->ARR = 399;
-    }else if(Freq == 2)
-    {
-    	htim4.Instance->ARR = 266;
-    }else if(Freq == 3)
-    {
-    	htim4.Instance->ARR = 199;
-    }else if(Freq == 4)
-    {
-    	htim4.Instance->ARR = 159;
-    }else if(Freq == 5)
-    {
-    	htim4.Instance->ARR = 132;
-    }else if(Freq == 6)
-    {
-    	htim4.Instance->ARR = 113;
-    }else if(Freq == 7)
-    {
-    	htim4.Instance->ARR = 99;
-    }else if(Freq == 8)
-    {
-    	htim4.Instance->ARR = 87;
-    }else if(Freq == 9)
-    {
-    	htim4.Instance->ARR = 79;
-    }else if(Freq == 10)
-    {
-    	htim4.Instance->ARR = 71;
-    }else if(Freq == 11)
-    {
-    	htim4.Instance->ARR = 65;
-    }else if(Freq == 12)
-    {
-    	htim4.Instance->ARR = 60;
-    }else if(Freq == 13)
-    {
-    	htim4.Instance->ARR = 56;
-    }else if(Freq == 14)
-    {
-    	htim4.Instance->ARR = 52;
-    }else if(Freq == 15)
-    {
-    	htim4.Instance->ARR = 49;
-    }else if(Freq == 16)
-    {
-    	htim4.Instance->ARR = 46;
-    }else if(Freq == 17)
-    {
-    	htim4.Instance->ARR = 43;
-    }else if(Freq == 18)
-    {
-    	htim4.Instance->ARR = 41;
-    }else if(Freq == 19)
-    {
-    	htim4.Instance->ARR = 39;
-    }*/
+
     //Setting up duty cycles according to the now Counter Period
     TIM4->CCR1=(20.0/100.0)*htim4.Instance->ARR ;
     TIM4->CCR2=(40.0/100.0)*htim4.Instance->ARR ;
