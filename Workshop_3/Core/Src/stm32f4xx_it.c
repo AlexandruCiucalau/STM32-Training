@@ -41,7 +41,6 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-extern TIM_HandleTypeDef htim4;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -204,35 +203,17 @@ void SysTick_Handler(void)
 void EXTI0_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI0_IRQn 0 */
-	//variable to count desired Frequency (in kHz)
-	static uint8_t Freq = 5;
-	uint16_t aux = 0;
-	
-	Freq += 5;
-
-	if(Freq >= 105)
-	{
-		Freq = 5;
-	}
-/*
-    static uint32_t last_interrupt_time = 0;
-    uint32_t current_time = HAL_GetTick();
-
-    // Check if it's been at least 200 milliseconds since the last interrupt
-    if ((current_time - last_interrupt_time) > 200) {
-        Freq+=5;
-
-        if (Freq >= 105) { // It keeps getting stuck at 40kHz
-            Freq = 5;
-        }
+  //variable to count desired Frequency (in kHz)
+    static uint8_t Freq = 5;
+    uint16_t aux = 0;
+    if (Freq >= 100)
+    {
+        Freq = 5;
+    }else{
+    	Freq+=5;
     }
-
-    // Update last interrupt time
-    last_interrupt_time = current_time;
-*/
-	//Calculating the new Counter Period for desired Frequency
-    aux = 8000/Freq;
-    aux = aux / 2;
+    //Calculating the new Counter Period for desired Frequency
+    aux = 4000/Freq;
     aux = aux - 1;
     htim4.Instance->ARR = aux;
 
