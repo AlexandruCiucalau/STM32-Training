@@ -31,7 +31,10 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define CLK_FREQ	4000
+#define DUTY20		0.2
+#define DUTY40		0.4
+#define DUTY60		0.6
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -213,15 +216,15 @@ void EXTI0_IRQHandler(void)
     	Freq+=5;
     }
     //Calculating the new Counter Period for desired Frequency
-    arr_value = 4000/Freq;
-    arr_value = arr_value - 1;
-    htim4.Instance->ARR = arr_value;
+	    arr_value = CLK_FREQ/Freq;
+	    arr_value = arr_value - 1;
+	    htim4.Instance->ARR = arr_value;
 
-    //Setting up duty cycles according to the now Counter Period
-    TIM4->CCR1=(uint16_t)(0.20 * arr_value);
-    TIM4->CCR2=(uint16_t)(0.40 * arr_value);
-    TIM4->CCR3=(uint16_t)(0.60 * arr_value);
-    TIM4->CCR4=(uint16_t)(0.60 * arr_value);
+	    //Setting up duty cycles according to the now Counter Period
+	    TIM4->CCR1=(uint16_t)(DUTY20 * arr_value);
+	    TIM4->CCR2=(uint16_t)(DUTY40 * arr_value);
+	    TIM4->CCR3=(uint16_t)(DUTY60 * arr_value);
+	    TIM4->CCR4=(uint16_t)(DUTY60 * arr_value);
   /* USER CODE END EXTI0_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
   /* USER CODE BEGIN EXTI0_IRQn 1 */
