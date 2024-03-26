@@ -205,7 +205,7 @@ void EXTI0_IRQHandler(void)
   /* USER CODE BEGIN EXTI0_IRQn 0 */
   //variable to count desired Frequency (in kHz)
     static uint8_t Freq = 5;
-    uint16_t aux = 0;
+    uint16_t arr_value = 0;
     if (Freq >= 100)
     {
         Freq = 5;
@@ -213,15 +213,15 @@ void EXTI0_IRQHandler(void)
     	Freq+=5;
     }
     //Calculating the new Counter Period for desired Frequency
-    aux = 4000/Freq;
-    aux = aux - 1;
-    htim4.Instance->ARR = aux;
+    arr_value = 4000/Freq;
+    arr_value = arr_value - 1;
+    htim4.Instance->ARR = arr_value;
 
     //Setting up duty cycles according to the now Counter Period
-    TIM4->CCR1=(20.0/100.0)*htim4.Instance->ARR ;
-    TIM4->CCR2=(40.0/100.0)*htim4.Instance->ARR ;
-    TIM4->CCR3=(60.0/100.0)*htim4.Instance->ARR ;
-    TIM4->CCR4=(60.0/100.0)*htim4.Instance->ARR ;
+    TIM4->CCR1=(uint16_t)(0.20 * arr_value);
+    TIM4->CCR2=(uint16_t)(0.40 * arr_value);
+    TIM4->CCR3=(uint16_t)(0.60 * arr_value);
+    TIM4->CCR4=(uint16_t)(0.60 * arr_value);
   /* USER CODE END EXTI0_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
   /* USER CODE BEGIN EXTI0_IRQn 1 */
