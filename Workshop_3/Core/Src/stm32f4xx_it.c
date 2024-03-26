@@ -208,32 +208,32 @@ void EXTI0_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI0_IRQn 0 */
   //variable to count desired Frequency (in kHz)
-    static uint8_t Freq = 5;
-    static uint32_t lastInterrupt = 0;
-    uint16_t arr_value = 0;
+  static uint8_t Freq = 5;
+  static uint32_t lastInterrupt = 0;
+  uint16_t arr_value = 0;
  
-    uint32_t currentInterrupt = HAL_GetTick();
-    if(lastInterrupt - currentInterrupt > DEBOUNCE_DELAY)
-    {
-         if (Freq >= 100)
-    {
-        Freq = 5;
-    }else{
-    	   Freq+=5;
-    }
-    //Calculating the new Counter Period for desired Frequency
-    arr_value = CLK_FREQ/Freq;
-    arr_value = arr_value - 1;
-    htim4.Instance->ARR = arr_value;
+  uint32_t currentInterrupt = HAL_GetTick();
+  if(lastInterrupt - currentInterrupt > DEBOUNCE_DELAY)
+  {
+    if (Freq >= 100)
+  {
+    Freq = 5;
+  }else{
+    Freq += 5;
+  }
+  //Calculating the new Counter Period for desired Frequency
+  arr_value = CLK_FREQ/Freq;
+  arr_value = arr_value - 1;
+  htim4.Instance->ARR = arr_value;
 
-    //Setting up duty cycles according to the now Counter Period
-    TIM4->CCR1=(uint16_t)(DUTY20 * arr_value);
-    TIM4->CCR2=(uint16_t)(DUTY40 * arr_value);
-    TIM4->CCR3=(uint16_t)(DUTY60 * arr_value);
-    TIM4->CCR4=(uint16_t)(DUTY60 * arr_value);
+  //Setting up duty cycles according to the now Counter Period
+  TIM4->CCR1=(uint16_t)(DUTY20 * arr_value);
+  TIM4->CCR2=(uint16_t)(DUTY40 * arr_value);
+  TIM4->CCR3=(uint16_t)(DUTY60 * arr_value);
+  TIM4->CCR4=(uint16_t)(DUTY60 * arr_value);
      
-    lastInterrupt = currentInterrupt;
-    }
+  lastInterrupt = currentInterrupt;
+  }
 
   /* USER CODE END EXTI0_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
