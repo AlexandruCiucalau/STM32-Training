@@ -22,6 +22,7 @@
 #include "stm32f4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "stdbool.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -31,7 +32,11 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define ADC_CHANNEL_1           ((uint32_t)ADC_CR1_AWDCH_0)
+#define ADC_CHANNEL_2           ((uint32_t)ADC_CR1_AWDCH_1)
+#define ADC_CHANNEL_3           ((uint32_t)(ADC_CR1_AWDCH_1 | ADC_CR1_AWDCH_0))
+#define ADC_CHANNEL_4           ((uint32_t)ADC_CR1_AWDCH_2)
+#define ADC_THRESHHOLD			500
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -41,7 +46,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-
+static bool Light_status = 1;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -57,7 +62,7 @@
 /* External variables --------------------------------------------------------*/
 extern ADC_HandleTypeDef hadc1;
 /* USER CODE BEGIN EV */
-
+extern TIM_HandleTypeDef htim4;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -205,6 +210,21 @@ void EXTI0_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI0_IRQn 0 */
 
+  static uint32_t last_interrupt_time = 0;
+  uint32_t current_time = HAL_GetTick();
+
+  if(current_time - last_interrupt_time > 200)
+  {
+	  if(Light_status)
+	  {
+		  Light_status = 0;
+	  }else
+	  {
+	    Light_status = 1;
+	  }
+
+	last_interrupt_time = current_time;
+  }
   /* USER CODE END EXTI0_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(BTN_LIGHT_Pin);
   /* USER CODE BEGIN EXTI0_IRQn 1 */
@@ -217,13 +237,104 @@ void EXTI0_IRQHandler(void)
   */
 void ADC_IRQHandler(void)
 {
-  /* USER CODE BEGIN ADC_IRQn 0 */
+  static uint8_t currentPotentiometer = 0; // Variable to track the current potentiometer
 
-  /* USER CODE END ADC_IRQn 0 */
-  HAL_ADC_IRQHandler(&hadc1);
-  /* USER CODE BEGIN ADC_IRQn 1 */
+  uint32_t adcValue;
+  // Read ADC value from the current potentiometer
+  adcValue = HAL_ADC_GetValue(&hadc1);
 
-  /* USER CODE END ADC_IRQn 1 */
+  // Decide whether or not to light the LED on the selected channel
+  if(Light_status)
+  {
+   	if (adcValue <= ADC_THRESHHOLD) 
+    { 
+      switch (currentPotentiometer)
+      {
+   	    case 0:
+   	    HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_1);
+   	    break;
+        case 1:
+        HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_2);
+        break;
+        case 2:
+        HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_3);
+        break;
+        case 3:
+        HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_4);
+        break;
+        default:
+        break;
+      }
+    } else if(adcValue > ADC_THRESHHOLD)
+    {
+    	switch (currentPotentiometer) 
+      {
+    	  case 0:
+    	  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
+    	  break;
+    	  case 1:
+    	  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
+    	  break;
+    	  case 2:
+    	  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
+    	  break;
+    	  case 3:
+    	  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_4);
+    	  break;
+    	  default:
+    	  break;
+    	}
+    }
+
+    uint32_t dutyCycle;
+    // Calculate duty cycle based on ADC value
+    dutyCycle = (adcValue * htim4.Instance->ARR) / 4095;
+    // Set duty cycle based on the current potentiometer
+    switch (currentPotentiometer) 
+    {
+      case 0:
+      TIM4->CCR1 = dutyCycle;
+      break;
+      case 1:
+      TIM4->CCR2 = dutyCycle;
+      break;
+      case 2:
+      TIM4->CCR3 = dutyCycle;
+      break;
+      case 3:
+      TIM4->CCR4 = dutyCycle;
+      break;
+      default:
+      break;
+     }
+
+    // Increment current potentiometer variable for the next iteration
+    currentPotentiometer++;
+    if (currentPotentiometer > 4) 
+    {
+      currentPotentiometer = 0;
+    }
+
+    ADC_ChannelConfTypeDef sConfig = {0};
+    // Configure ADC channel for the next potentiometer
+    sConfig.Channel = ADC_CHANNEL_1 + (currentPotentiometer - 1); // Adjusting currentPotentiometer to match ADC_CHANNEL
+    sConfig.Rank = 1;
+    sConfig.SamplingTime = ADC_SAMPLETIME_480CYCLES;
+    // Configure ADC channel
+    if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK) 
+    {
+      Error_Handler();
+    }
+  } else
+  {
+    HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_1);
+    HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_2);
+    HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_3);
+    HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_4);
+  }
+
+    HAL_ADC_Start_IT(&hadc1);
+    HAL_ADC_IRQHandler(&hadc1);
 }
 
 /* USER CODE BEGIN 1 */
