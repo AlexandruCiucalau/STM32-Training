@@ -35,6 +35,7 @@
 #define DUTY20		0.2
 #define DUTY40		0.4
 #define DUTY60		0.6
+#define DEBOUNCE_DELAY 300
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -208,12 +209,17 @@ void EXTI0_IRQHandler(void)
   /* USER CODE BEGIN EXTI0_IRQn 0 */
   //variable to count desired Frequency (in kHz)
     static uint8_t Freq = 5;
+    static uint32_t lastInterrupt = 0;
     uint16_t arr_value = 0;
-    if (Freq >= 100)
+ 
+    uint32_t currentInterrupt = HAL_GetTick();
+    if(lastInterrupt - currentInterrupt > DEBOUNCE_DELAY)
+    {
+         if (Freq >= 100)
     {
         Freq = 5;
     }else{
-    	Freq+=5;
+    	   Freq+=5;
     }
     //Calculating the new Counter Period for desired Frequency
     arr_value = CLK_FREQ/Freq;
@@ -225,24 +231,15 @@ void EXTI0_IRQHandler(void)
     TIM4->CCR2=(uint16_t)(DUTY40 * arr_value);
     TIM4->CCR3=(uint16_t)(DUTY60 * arr_value);
     TIM4->CCR4=(uint16_t)(DUTY60 * arr_value);
+     
+    lastInterrupt = currentInterrupt;
+    }
+
   /* USER CODE END EXTI0_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
   /* USER CODE BEGIN EXTI0_IRQn 1 */
 
   /* USER CODE END EXTI0_IRQn 1 */
-}
-
-/**
-  * @brief This function handles TIM4 global interrupt.
-  */
-void TIM4_IRQHandler(void)
-{
-  /* USER CODE BEGIN TIM4_IRQn 0 */
-  /* USER CODE END TIM4_IRQn 0 */
-  HAL_TIM_IRQHandler(&htim4);
-  /* USER CODE BEGIN TIM4_IRQn 1 */
-
-  /* USER CODE END TIM4_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */
