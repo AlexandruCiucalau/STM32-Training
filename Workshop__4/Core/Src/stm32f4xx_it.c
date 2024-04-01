@@ -27,7 +27,12 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN TD */
-
+typedef enum {
+    POTENTIOMETER_ORANGE = 0,
+    POTENTIOMETER_RED,
+    POTENTIOMETER_BLUE,
+    POTENTIOMETER_GREEN
+} Potentiometer;
 /* USER CODE END TD */
 
 /* Private define ------------------------------------------------------------*/
@@ -36,7 +41,8 @@
 #define ADC_CHANNEL_2           ((uint32_t)ADC_CR1_AWDCH_1)
 #define ADC_CHANNEL_3           ((uint32_t)(ADC_CR1_AWDCH_1 | ADC_CR1_AWDCH_0))
 #define ADC_CHANNEL_4           ((uint32_t)ADC_CR1_AWDCH_2)
-#define ADC_THRESHHOLD			500
+#define ADC_THRESHOLD			200
+#define ADC_MAX				4095
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -51,7 +57,7 @@ static bool Light_status = 1;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
-
+void updateDuty_cycle(uint8_t currentPotentiometer,  uint32_t adcValue);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -215,14 +221,7 @@ void EXTI0_IRQHandler(void)
 
   if(current_time - last_interrupt_time > 200)
   {
-	  if(Light_status)
-	  {
-		  Light_status = 0;
-	  }else
-	  {
-	    Light_status = 1;
-	  }
-
+	Light_status = !Light_status;
 	last_interrupt_time = current_time;
   }
   /* USER CODE END EXTI0_IRQn 0 */
@@ -237,7 +236,7 @@ void EXTI0_IRQHandler(void)
   */
 void ADC_IRQHandler(void)
 {
-  static uint8_t currentPotentiometer = 0; // Variable to track the current potentiometer
+  static uint8_t currentPotentiometer = POTENTIOMETER_ORANGE; // Variable to track the current potentiometer
 
   uint32_t adcValue;
   // Read ADC value from the current potentiometer
@@ -246,51 +245,90 @@ void ADC_IRQHandler(void)
   // Decide whether or not to light the LED on the selected channel
   if(Light_status)
   {
-   	if (adcValue <= ADC_THRESHHOLD) 
+    if (adcValue <= ADC_THRESHOLD) 
     { 
       switch (currentPotentiometer)
       {
-   	    case 0:
-   	    HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_1);
-   	    break;
-        case 1:
+   	case POTENTIOMETER_ORANGE:
+   	HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_1);
+   	break;
+        case POTENTIOMETER_RED:
         HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_2);
         break;
-        case 2:
+        case POTENTIOMETER_BLUE:
         HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_3);
         break;
-        case 3:
+        case POTENTIOMETER_GREEN:
         HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_4);
         break;
         default:
         break;
       }
-    } else if(adcValue > ADC_THRESHHOLD)
+    } else if(adcValue > ADC_THRESHOLD && adcValue < ADC_MAX)
     {
     	switch (currentPotentiometer) 
       {
-    	  case 0:
+    	  case POTENTIOMETER_ORANGE:
     	  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
+ 	  updateDuty_cycle(currentPotentiometer, adcValue);
     	  break;
-    	  case 1:
+    	  case POTENTIOMETER_RED:
     	  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
+	  updateDuty_cycle(currentPotentiometer, adcValue);
     	  break;
-    	  case 2:
+    	  case POTENTIOMETER_BLUE:
     	  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
+	  updateDuty_cycle(currentPotentiometer, adcValue);
     	  break;
-    	  case 3:
+    	  case POTENTIOMETER_GREEN:
     	  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_4);
+	  updateDuty_cycle(currentPotentiometer, adcValue);
     	  break;
     	  default:
     	  break;
     	}
+    }else if(adcValue > ADC_MAX - ADC_THRESHOLD) // Completely ON state for a channel
+    {
+  	  updateDuty_cycle(currentPotentiometer, ADC_MAX);
+    }
+	  
+    // Increment current potentiometer variable for the next iteration
+    currentPotentiometer++;
+    if (currentPotentiometer > POTENTIOMETER_GREEN + 1) 
+    {
+      currentPotentiometer = POTENTIOMETER_ORANGE;
     }
 
+    ADC_ChannelConfTypeDef sConfig = {0};
+    // Configure ADC channel for the next potentiometer
+    sConfig.Channel = ADC_CHANNEL_1 + (currentPotentiometer - 1); // Adjusting currentPotentiometer to match ADC_CHANNEL
+    sConfig.Rank = 1;
+    sConfig.SamplingTime = ADC_SAMPLETIME_480CYCLES;
+    // Configure ADC channel
+    if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK) 
+    {
+      Error_Handler();
+    }
+  } else // LEDs turned off from user button
+  {
+    HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_1);
+    HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_2);
+    HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_3);
+    HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_4);
+  }
+
+    HAL_ADC_Start_IT(&hadc1);
+    HAL_ADC_IRQHandler(&hadc1);
+}
+
+/* USER CODE BEGIN 1 */
+void updateDuty_cycle(uint8_t currentPotentiometer,  uint32_t adcValue)
+{
     uint32_t dutyCycle;
     // Calculate duty cycle based on ADC value
-    dutyCycle = (adcValue * htim4.Instance->ARR) / 4095;
+    dutyCycle = (adcValue * htim4.Instance->ARR) / ADC_MAX;
     // Set duty cycle based on the current potentiometer
-    switch (currentPotentiometer) 
+    switch (currentPotentiometer)
     {
       case 0:
       TIM4->CCR1 = dutyCycle;
@@ -307,36 +345,5 @@ void ADC_IRQHandler(void)
       default:
       break;
      }
-
-    // Increment current potentiometer variable for the next iteration
-    currentPotentiometer++;
-    if (currentPotentiometer > 4) 
-    {
-      currentPotentiometer = 0;
-    }
-
-    ADC_ChannelConfTypeDef sConfig = {0};
-    // Configure ADC channel for the next potentiometer
-    sConfig.Channel = ADC_CHANNEL_1 + (currentPotentiometer - 1); // Adjusting currentPotentiometer to match ADC_CHANNEL
-    sConfig.Rank = 1;
-    sConfig.SamplingTime = ADC_SAMPLETIME_480CYCLES;
-    // Configure ADC channel
-    if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK) 
-    {
-      Error_Handler();
-    }
-  } else
-  {
-    HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_1);
-    HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_2);
-    HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_3);
-    HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_4);
-  }
-
-    HAL_ADC_Start_IT(&hadc1);
-    HAL_ADC_IRQHandler(&hadc1);
 }
-
-/* USER CODE BEGIN 1 */
-
 /* USER CODE END 1 */
