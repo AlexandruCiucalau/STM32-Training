@@ -330,16 +330,16 @@ void updateDuty_cycle(uint8_t currentPotentiometer,  uint32_t adcValue)
     // Set duty cycle based on the current potentiometer
     switch (currentPotentiometer)
     {
-      case 0:
+      case POTENTIOMETER_ORANGE:
       TIM4->CCR1 = dutyCycle;
       break;
-      case 1:
+      case POTENTIOMETER_RED:
       TIM4->CCR2 = dutyCycle;
       break;
-      case 2:
+      case POTENTIOMETER_BLUE:
       TIM4->CCR3 = dutyCycle;
       break;
-      case 3:
+      case POTENTIOMETER_GREEN:
       TIM4->CCR4 = dutyCycle;
       break;
       default:
