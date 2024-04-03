@@ -21,17 +21,25 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "stdbool.h"
+#include <stdio.h>
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+typedef enum {
+    POTENTIOMETER_ORANGE = 0,
+    POTENTIOMETER_RED,
+    POTENTIOMETER_BLUE,
+    POTENTIOMETER_GREEN,
+	POTENTIOMETER_COUNT
+} Potentiometer;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define TIME_PRINT_ADC			10000
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -41,7 +49,6 @@
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
-
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
@@ -50,7 +57,13 @@ TIM_HandleTypeDef htim12;
 UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
-
+// Variables to control blinking state with UART
+bool ledBlinking1 = 0;
+bool ledBlinking2 = 0;
+bool ledBlinking3 = 0;
+bool ledBlinking4 = 0;
+// Variable to share with button interrupt
+extern bool btn_status;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -63,7 +76,7 @@ static void MX_TIM3_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM12_Init(void);
 /* USER CODE BEGIN PFP */
-
+void Print_ADC_Values(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -112,14 +125,86 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  HAL_ADC_Start_IT(&hadc1);
   while (1)
   {
+	  if (btn_status == 1)
+	  {
+	      uint8_t rcvBuf[1];
+	      HAL_StatusTypeDef result;
+	      result = HAL_UART_Receive(&huart3, rcvBuf, 1, 10);
+
+	      if (result == HAL_OK) {
+	          switch (rcvBuf[0]) {
+	              case '1':
+	                  ledBlinking1 = !ledBlinking1;
+	                  if (ledBlinking1)
+	                  {
+	                      HAL_TIM_Base_Start_IT(&htim2);
+	                      HAL_UART_Transmit(&huart3, (uint8_t *)" - GREEN_ON \r\n", 14, 100);
+	                  } else
+	                  {
+	                      HAL_TIM_Base_Stop_IT(&htim2);
+	                      HAL_UART_Transmit(&huart3, (uint8_t *)" - GREEN_OFF \r\n", 14, 100);
+	                      HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
+	                  }
+	                  break;
+	              case '2':
+	                  ledBlinking2 = !ledBlinking2;
+	                  if (ledBlinking2) 
+	                  {
+	                      HAL_TIM_Base_Start_IT(&htim3);
+	                      HAL_UART_Transmit(&huart3, (uint8_t *)" - ORANGE_ON \r\n", 14, 100);
+	                  } else 
+	                  {
+	                      HAL_TIM_Base_Stop_IT(&htim3);
+	                      HAL_UART_Transmit(&huart3, (uint8_t *)" - ORANGE_OFF \r\n", 14, 100);
+	                      HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_RESET);
+	                  }
+	                  break;
+	              case '3':
+	                  ledBlinking3 = !ledBlinking3;
+	                  if (ledBlinking3) 
+	                  {
+	                      HAL_TIM_Base_Start_IT(&htim4);
+	                      HAL_UART_Transmit(&huart3, (uint8_t *)" - RED_ON \r\n", 14, 100);
+	                  } else 
+	                  {
+	                      HAL_TIM_Base_Stop_IT(&htim4);
+	                      HAL_UART_Transmit(&huart3, (uint8_t *)" - RED_OFF \r\n", 14, 100);
+	                      HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
+	                  }
+	                  break;
+	              case '4':
+	                  ledBlinking4 = !ledBlinking4;
+	                  if (ledBlinking4) 
+	                  {
+	                      HAL_TIM_Base_Start_IT(&htim12);
+	                      HAL_UART_Transmit(&huart3, (uint8_t *)" - BLUE_ON \r\n", 14, 100);
+	                  } else
+	                  {
+	                      HAL_TIM_Base_Stop_IT(&htim12);
+	                      HAL_UART_Transmit(&huart3, (uint8_t *)" - BLUE_OFF \r\n", 14, 100);
+	                      HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_RESET);
+	                  }
+	                  break;
+	              default:
+	                  HAL_UART_Transmit(&huart3, (uint8_t *)" - WRONG_INPUT \r\n", 12, 100);
+	                  break;
+	          }
+	      }
+	  }
+      // At the end of while loop print ADC values every 10 seconds
+	  Print_ADC_Values();
+
+  }
+      // Get the values from potentiometers and display them
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  }
+ }
   /* USER CODE END 3 */
-}
+
 
 /**
   * @brief System Clock Configuration
@@ -460,6 +545,46 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void Print_ADC_Values(void) {
+    // Variable to track the current ADC channel
+    static uint32_t adcValues[POTENTIOMETER_COUNT] = {0}; // Array to store ADC values for each channel
+    static uint32_t lastInterrupt = 0;
+    uint32_t currentInterrupt = HAL_GetTick();
+
+    if (currentInterrupt - lastInterrupt > TIME_PRINT_ADC)
+    {
+        // Read ADC values from all four channels
+        for (Potentiometer pot = POTENTIOMETER_ORANGE; pot < POTENTIOMETER_COUNT; pot++)
+        {
+            // Configure ADC channel
+            ADC_ChannelConfTypeDef sConfig = {0};
+            sConfig.Channel = ADC_CHANNEL_1 + pot;
+            sConfig.Rank = 1;
+            sConfig.SamplingTime = ADC_SAMPLETIME_480CYCLES;
+            HAL_ADC_ConfigChannel(&hadc1, &sConfig);
+
+            // Start ADC conversion
+            HAL_ADC_Start(&hadc1);
+
+            // Wait for ADC conversion to complete
+            if (HAL_ADC_PollForConversion(&hadc1, 100) == HAL_OK)
+            {
+                // Read ADC value
+                adcValues[pot] = HAL_ADC_GetValue(&hadc1);
+            }
+        }
+
+        // Print the ADC values for all channels
+        char message[50];
+        for (Potentiometer pot = POTENTIOMETER_ORANGE; pot < POTENTIOMETER_COUNT; pot++)
+        {
+            sprintf(message, "Potentiometer %d ADC Value: %lu\r\n", pot + 1, adcValues[pot]);
+            HAL_UART_Transmit(&huart3, (uint8_t *)message, strlen(message), 100);
+        }
+
+        lastInterrupt = currentInterrupt;
+    }
+}
 
 /* USER CODE END 4 */
 

@@ -22,6 +22,9 @@
 #include "stm32f4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "stdbool.h"
+#include <stdio.h>
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -41,6 +44,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
+bool btn_status = 1;
 
 /* USER CODE END PV */
 
@@ -61,7 +65,6 @@ extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim4;
 extern TIM_HandleTypeDef htim12;
 /* USER CODE BEGIN EV */
-
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -205,30 +208,50 @@ void SysTick_Handler(void)
 /**
   * @brief This function handles EXTI line0 interrupt.
   */
-void EXTI0_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI0_IRQn 0 */
+void EXTI0_IRQHandler(void) {
+    /* USER CODE BEGIN EXTI0_IRQn 0 */
+    static bool status = 1;
+    static uint32_t last_interrupt_time = 0;
+    uint32_t current_time = HAL_GetTick();
 
-  /* USER CODE END EXTI0_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(BTN_LIGHT_Pin);
-  /* USER CODE BEGIN EXTI0_IRQn 1 */
+    if (current_time - last_interrupt_time > 200) {
+        if (status == 1) {
+            HAL_TIM_Base_Start_IT(&htim2);
+            HAL_TIM_Base_Start_IT(&htim3);
+            HAL_TIM_Base_Start_IT(&htim4);
+            HAL_TIM_Base_Start_IT(&htim12);
+            status = 0;
+        } else if (status == 0) {
+            HAL_TIM_Base_Stop_IT(&htim2);
+            HAL_TIM_Base_Stop_IT(&htim3);
+            HAL_TIM_Base_Stop_IT(&htim4);
+            HAL_TIM_Base_Stop_IT(&htim12);
+            HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
+            HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_RESET);
+            HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
+            HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_RESET);
+            status = 1;
+        }
+        last_interrupt_time = current_time;
+        btn_status = status; // Update variable to use in main for UART control
+    }
+    /* USER CODE END EXTI0_IRQn 0 */
 
-  /* USER CODE END EXTI0_IRQn 1 */
+    HAL_GPIO_EXTI_IRQHandler(BTN_LIGHT_Pin);
+    /* USER CODE BEGIN EXTI0_IRQn 1 */
+
+    /* USER CODE END EXTI0_IRQn 1 */
 }
+
 
 /**
   * @brief This function handles ADC1, ADC2 and ADC3 global interrupts.
   */
 void ADC_IRQHandler(void)
 {
-  /* USER CODE BEGIN ADC_IRQn 0 */
-
-  /* USER CODE END ADC_IRQn 0 */
-  HAL_ADC_IRQHandler(&hadc1);
-  /* USER CODE BEGIN ADC_IRQn 1 */
-
-  /* USER CODE END ADC_IRQn 1 */
+    HAL_ADC_IRQHandler(&hadc1);
 }
+
 
 /**
   * @brief This function handles TIM2 global interrupt.
@@ -236,7 +259,7 @@ void ADC_IRQHandler(void)
 void TIM2_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM2_IRQn 0 */
-
+	HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
   /* USER CODE END TIM2_IRQn 0 */
   HAL_TIM_IRQHandler(&htim2);
   /* USER CODE BEGIN TIM2_IRQn 1 */
@@ -250,7 +273,7 @@ void TIM2_IRQHandler(void)
 void TIM3_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM3_IRQn 0 */
-
+	HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
   /* USER CODE END TIM3_IRQn 0 */
   HAL_TIM_IRQHandler(&htim3);
   /* USER CODE BEGIN TIM3_IRQn 1 */
@@ -264,7 +287,7 @@ void TIM3_IRQHandler(void)
 void TIM4_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM4_IRQn 0 */
-
+	HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
   /* USER CODE END TIM4_IRQn 0 */
   HAL_TIM_IRQHandler(&htim4);
   /* USER CODE BEGIN TIM4_IRQn 1 */
@@ -278,7 +301,7 @@ void TIM4_IRQHandler(void)
 void TIM8_BRK_TIM12_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM8_BRK_TIM12_IRQn 0 */
-
+	HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
   /* USER CODE END TIM8_BRK_TIM12_IRQn 0 */
   HAL_TIM_IRQHandler(&htim12);
   /* USER CODE BEGIN TIM8_BRK_TIM12_IRQn 1 */
