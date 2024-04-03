@@ -208,8 +208,9 @@ void SysTick_Handler(void)
 /**
   * @brief This function handles EXTI line0 interrupt.
   */
-void EXTI0_IRQHandler(void) {
-    /* USER CODE BEGIN EXTI0_IRQn 0 */
+void EXTI0_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI0_IRQn 0 */
     static bool status = 1;
     static uint32_t last_interrupt_time = 0;
     uint32_t current_time = HAL_GetTick();
@@ -235,23 +236,26 @@ void EXTI0_IRQHandler(void) {
         last_interrupt_time = current_time;
         btn_status = status; // Update variable to use in main for UART control
     }
-    /* USER CODE END EXTI0_IRQn 0 */
+  /* USER CODE END EXTI0_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(BTN_LIGHT_Pin);
+  /* USER CODE BEGIN EXTI0_IRQn 1 */
 
-    HAL_GPIO_EXTI_IRQHandler(BTN_LIGHT_Pin);
-    /* USER CODE BEGIN EXTI0_IRQn 1 */
-
-    /* USER CODE END EXTI0_IRQn 1 */
+  /* USER CODE END EXTI0_IRQn 1 */
 }
-
 
 /**
   * @brief This function handles ADC1, ADC2 and ADC3 global interrupts.
   */
 void ADC_IRQHandler(void)
 {
-    HAL_ADC_IRQHandler(&hadc1);
-}
+  /* USER CODE BEGIN ADC_IRQn 0 */
 
+  /* USER CODE END ADC_IRQn 0 */
+  HAL_ADC_IRQHandler(&hadc1);
+  /* USER CODE BEGIN ADC_IRQn 1 */
+
+  /* USER CODE END ADC_IRQn 1 */
+}
 
 /**
   * @brief This function handles TIM2 global interrupt.
