@@ -31,7 +31,8 @@ typedef enum {
     POTENTIOMETER_ORANGE = 0,
     POTENTIOMETER_RED,
     POTENTIOMETER_BLUE,
-    POTENTIOMETER_GREEN
+    POTENTIOMETER_GREEN,
+    POTENTIOMETER_MAX
 } Potentiometer;
 /* USER CODE END TD */
 
@@ -250,51 +251,51 @@ void ADC_IRQHandler(void)
       switch (currentPotentiometer)
       {
    	case POTENTIOMETER_ORANGE:
-   	HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_1);
-   	break;
+   		HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_1);
+   		break;
         case POTENTIOMETER_RED:
-        HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_2);
-        break;
+        	HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_2);
+        	break;
         case POTENTIOMETER_BLUE:
-        HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_3);
-        break;
+        	HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_3);
+        	break;
         case POTENTIOMETER_GREEN:
-        HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_4);
-        break;
+        	HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_4);
+        	break;
         default:
-        break;
+        	break;
       }
-    } else if(adcValue > ADC_THRESHOLD && adcValue < ADC_MAX)
+    } else if(adcValue < ADC_MAX - ADC_THRESHOLD)
     {
     	switch (currentPotentiometer) 
       {
     	  case POTENTIOMETER_ORANGE:
-    	  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
- 	  updateDuty_cycle(currentPotentiometer, adcValue);
-    	  break;
+    	  	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
+ 	  	updateDuty_cycle(currentPotentiometer, adcValue);
+    	  	break;
     	  case POTENTIOMETER_RED:
-    	  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
-	  updateDuty_cycle(currentPotentiometer, adcValue);
-    	  break;
+    	  	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
+	  	updateDuty_cycle(currentPotentiometer, adcValue);
+    	  	break;
     	  case POTENTIOMETER_BLUE:
-    	  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
-	  updateDuty_cycle(currentPotentiometer, adcValue);
-    	  break;
+    	  	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
+	  	updateDuty_cycle(currentPotentiometer, adcValue);
+    	  	break;
     	  case POTENTIOMETER_GREEN:
-    	  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_4);
-	  updateDuty_cycle(currentPotentiometer, adcValue);
-    	  break;
+    	  	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_4);
+	  	updateDuty_cycle(currentPotentiometer, adcValue);
+    	  	break;
     	  default:
-    	  break;
+    	  	break;
     	}
-    }else if(adcValue > ADC_MAX - ADC_THRESHOLD) // Completely ON state for a channel
+    } else // Completely ON state for a channel
     {
   	  updateDuty_cycle(currentPotentiometer, ADC_MAX);
     }
 	  
     // Increment current potentiometer variable for the next iteration
     currentPotentiometer++;
-    if (currentPotentiometer > POTENTIOMETER_GREEN + 1) 
+    if (currentPotentiometer > POTENTIOMETER_MAX) 
     {
       currentPotentiometer = POTENTIOMETER_ORANGE;
     }
