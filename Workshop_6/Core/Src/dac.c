@@ -94,23 +94,24 @@ void CS43L22_Beep(soundToneType pitch, uint32_t duration_ms) {
     // Set sound frequency
     TxBuffer[0] = 0x1C;        // Register address
     switch (pitch) {
-        case C4: TxBuffer[1] = 0x00; break;
-        case C5: TxBuffer[1] = 0x11; break;
-        case D5: TxBuffer[1] = 0x22; break;
-        case E5: TxBuffer[1] = 0x33; break;
-        case F5: TxBuffer[1] = 0x44; break;
-        case G5: TxBuffer[1] = 0x55; break;
-        case A5: TxBuffer[1] = 0x66; break;
-        case B5: TxBuffer[1] = 0x77; break;
-        case C6: TxBuffer[1] = 0x88; break;
-        case D6: TxBuffer[1] = 0x99; break;
-        case E6: TxBuffer[1] = 0xAA; break;
-        case F6: TxBuffer[1] = 0xBB; break;
-        case G6: TxBuffer[1] = 0xCC; break;
-        case A6: TxBuffer[1] = 0xDD; break;
-        case B6: TxBuffer[1] = 0xEE; break;
-        case C7: TxBuffer[1] = 0xFF; break;
-        default: TxBuffer[1] = 0x00; break; // Default to maximum frequency
+        case C4: TxBuffer[1] = DO_MIDDLE; break;
+        case C5: TxBuffer[1] = RE_MIDDLE; break;
+        case D5: TxBuffer[1] = MI_MIDDLE; break;
+        case E5: TxBuffer[1] = FA_MIDDLE; break;
+        case F5: TxBuffer[1] = SO_MIDDLE; break;
+        case G5: TxBuffer[1] = LA_MIDDLE; break;
+        case A5: TxBuffer[1] = SI_MIDDLE; break;
+        case B5: TxBuffer[1] = DO_HIGH;   break;
+        case C6: TxBuffer[1] = DO_HIGH_1; break;
+        case D6: TxBuffer[1] = RE_HIGH;   break;
+        case E6: TxBuffer[1] = MI_HIGH;   break;
+        case F6: TxBuffer[1] = FA_HIGH;   break;
+        case G6: TxBuffer[1] = SO_HIGH;   break;
+        case A6: TxBuffer[1] = LA_HIGH;   break;
+        case B6: TxBuffer[1] = SI_HIGH_2; break;
+        case C7: TxBuffer[1] = DO_HIGH_2; break;
+
+        default: TxBuffer[1] = DO_MIDDLE; break; // Default to maximum frequency
     }
     HAL_I2C_Master_Transmit(&hi2c1, CS43L22_I2C_ADDRESS, TxBuffer, 2, I2C_TIMEOUT);
 
@@ -128,7 +129,7 @@ void CS43L22_Beep(soundToneType pitch, uint32_t duration_ms) {
     HAL_I2C_Master_Transmit(&hi2c1, CS43L22_I2C_ADDRESS, TxBuffer, 2, I2C_TIMEOUT);
 }
 void CS43L22_StartMelody(void)
-{   
+{
     const soundToneType songMelody[] = {C4, D5, E5, F5, G5, A5, B5};
     for (int i = 0; i < sizeof(songMelody) / sizeof(songMelody[0]); i++)
      {
