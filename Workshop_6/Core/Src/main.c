@@ -18,10 +18,9 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "dac.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -31,7 +30,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define FIRST_LETTER_A 			97
+#define LAST_LETTER_Z			122
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -49,6 +49,12 @@ UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
 
+int16_t dataI2S[100] = {0};
+const soundToneType toneLookup[22] = {
+    C4, C5, D5, E5, F5, G5, A5, B5,
+    C6, D6, E6, F6, G6, A6, B6,
+    C7, D7, E7, F7, G7, A7, B7
+};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -59,7 +65,6 @@ static void MX_I2C1_Init(void);
 static void MX_I2S3_Init(void);
 static void MX_USART3_UART_Init(void);
 /* USER CODE BEGIN PFP */
-
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -101,12 +106,34 @@ int main(void)
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
 
+  CS43L22_Init();
+
+  //Transmit empty data
+  HAL_I2S_Transmit_DMA(&hi2s3, (uint16_t *)dataI2S, 100);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  CS43L22_StartMelody();
   while (1)
   {
+      uint8_t rcvBuf[1];
+      HAL_StatusTypeDef result;
+      result = HAL_UART_Receive(&huart3, rcvBuf, 1, 10);
+
+      if (result == HAL_OK )
+      {
+          for (int i = C4; i < MAX_VALUE; i++)
+          {
+        	  if (rcvBuf[0] >= FIRST_LETTER_A && rcvBuf[0] <= LAST_LETTER_Z)
+        	  {
+        	      soundToneType tone = toneLookup[rcvBuf[0] - FIRST_LETTER_A];
+        	      CS43L22_Beep(tone, 300); // Beep with a constant duration of 1000
+        	      break;
+        	  }
+          }
+      }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -347,3 +374,4 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
+
