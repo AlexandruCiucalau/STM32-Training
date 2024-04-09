@@ -44,7 +44,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-bool btn_status = 1;
+bool btn_status = true;
 
 /* USER CODE END PV */
 
@@ -211,18 +211,18 @@ void SysTick_Handler(void)
 void EXTI0_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI0_IRQn 0 */
-    static bool status = 1;
+    static bool status = true;
     static uint32_t last_interrupt_time = 0;
     uint32_t current_time = HAL_GetTick();
 
     if (current_time - last_interrupt_time > 200) {
-        if (status == 1) {
+        if (status == true) {
             HAL_TIM_Base_Start_IT(&htim2);
             HAL_TIM_Base_Start_IT(&htim3);
             HAL_TIM_Base_Start_IT(&htim4);
             HAL_TIM_Base_Start_IT(&htim12);
-            status = 0;
-        } else if (status == 0) {
+            status = false;
+        } else if (status == false) {
             HAL_TIM_Base_Stop_IT(&htim2);
             HAL_TIM_Base_Stop_IT(&htim3);
             HAL_TIM_Base_Stop_IT(&htim4);
@@ -231,7 +231,7 @@ void EXTI0_IRQHandler(void)
             HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_RESET);
             HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
             HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_RESET);
-            status = 1;
+            status = true;
         }
         last_interrupt_time = current_time;
         btn_status = status; // Update variable to use in main for UART control

@@ -40,6 +40,11 @@ typedef enum {
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define TIME_PRINT_ADC			10000
+#define UART_INPUT_1			'1'
+#define UART_INPUT_2			'2'
+#define UART_INPUT_3			'3'
+#define UART_INPUT_4			'4'
+#define MAX_MESSAGE_LENGTH		50
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -137,7 +142,7 @@ int main(void)
 
 	      if (result == HAL_OK) {
 	          switch (rcvBuf[0]) {
-	              case '1':
+	              case UART_INPUT_1:
 	                  ledBlinking1 = !ledBlinking1;
 	                  if (ledBlinking1)
 	                  {
@@ -150,7 +155,7 @@ int main(void)
 	                      HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
 	                  }
 	                  break;
-	              case '2':
+	              case UART_INPUT_2:
 	                  ledBlinking2 = !ledBlinking2;
 	                  if (ledBlinking2) 
 	                  {
@@ -163,7 +168,7 @@ int main(void)
 	                      HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_RESET);
 	                  }
 	                  break;
-	              case '3':
+	              case UART_INPUT_3:
 	                  ledBlinking3 = !ledBlinking3;
 	                  if (ledBlinking3) 
 	                  {
@@ -176,7 +181,7 @@ int main(void)
 	                      HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
 	                  }
 	                  break;
-	              case '4':
+	              case UART_INPUT_4:
 	                  ledBlinking4 = !ledBlinking4;
 	                  if (ledBlinking4) 
 	                  {
@@ -575,7 +580,7 @@ void Print_ADC_Values(void) {
         }
 
         // Print the ADC values for all channels
-        char message[50];
+        char message[MAX_MESSAGE_LENGTH];
         for (Potentiometer pot = POTENTIOMETER_ORANGE; pot < POTENTIOMETER_COUNT; pot++)
         {
             sprintf(message, "Potentiometer %d ADC Value: %lu\r\n", pot + 1, adcValues[pot]);
