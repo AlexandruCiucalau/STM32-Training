@@ -8,35 +8,25 @@
 #define CS43L22_I2C_ADDRESS        0x94
 #define I2C_TIMEOUT                10
 
-#define DO_MIDDLE				   0x00
-#define RE_MIDDLE				   0x11
-#define MI_MIDDLE				   0x22
-#define FA_MIDDLE				   0x33
-#define SO_MIDDLE				   0x44
-#define LA_MIDDLE				   0X55
-#define SI_MIDDLE				   0x66
-#define DO_HIGH				           0x77
-#define DO_HIGH_1				   0x88
-#define RE_HIGH				           0x99
-#define MI_HIGH				   	   0xAA
-#define FA_HIGH			                   0xBB
-#define SO_HIGH					   0xCC
-#define LA_HIGH					   0xDD
-#define SI_HIGH_2				   0xEE
-#define DO_HIGH_2				   0xFF
-
-
-
-
-
-
-typedef enum
-{
-    C4, C5, D5, E5, F5, G5, A5, B5,
-    C6, D6, E6, F6, G6, A6, B6,
-    C7, MAX_VALUE
+typedef enum {
+    C4 = 0x00,
+    C5 = 0x11,
+    D5 = 0x22,
+    E5 = 0x33,
+    F5 = 0x44,
+    G5 = 0x55,
+    A5 = 0x66,
+    B5 = 0x77,
+    C6 = 0x88,
+    D6 = 0x99,
+    E6 = 0xAA,
+    F6 = 0xBB,
+    G6 = 0xCC,
+    A6 = 0xDD,
+    B6 = 0xEE,
+    C7 = 0xFF,
+    MAX_VALUE
 } soundToneType;
-
 
 void CS43L22_Init(void);
 void CS43L22_Beep(soundToneType pitch, uint32_t duration_ms);
