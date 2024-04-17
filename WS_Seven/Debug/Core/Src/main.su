@@ -1,0 +1,16 @@
+../Core/Src/main.c:107:5:main	16	static
+../Core/Src/main.c:190:6:SystemClock_Config	88	static
+../Core/Src/main.c:240:13:MX_I2C1_Init	8	static
+../Core/Src/main.c:274:13:MX_I2S3_Init	8	static
+../Core/Src/main.c:308:13:MX_SPI1_Init	8	static
+../Core/Src/main.c:346:13:MX_TIM4_Init	64	static
+../Core/Src/main.c:415:13:MX_DMA_Init	16	static
+../Core/Src/main.c:433:13:MX_GPIO_Init	56	static
+../Core/Src/main.c:482:6:isFlat	24	static
+../Core/Src/main.c:495:7:calculateTiltAngle	32	static
+../Core/Src/main.c:499:6:updateDutycycle	64	static
+../Core/Src/main.c:534:9:determineLED	32	static
+../Core/Src/main.c:561:6:setSound	56	static
+../Core/Src/main.c:586:6:acquireAndAverageData	32	static
+../Core/Src/main.c:618:6:startPWM	16	static
+../Core/Src/main.c:662:6:Error_Handler	4	static,ignoring_inline_asm

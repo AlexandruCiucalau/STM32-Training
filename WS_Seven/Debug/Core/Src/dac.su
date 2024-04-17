@@ -1,0 +1,3 @@
+../Core/Src/dac.c:11:6:CS43L22_Init	24	static
+../Core/Src/dac.c:86:6:CS43L22_Beep	32	static
+../Core/Src/dac.c:112:6:CS43L22_StartMelody	40	static
