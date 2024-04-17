@@ -21,7 +21,10 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "dac.h"
+#include <math.h>
+#include "MY_LIS3DSH.h"
+#include <stdbool.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -31,6 +34,15 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define ANGLE_THRESHOLD				10
+#define NUM_VALUES_TO_AVERAGE		8
+#define DEGREES_90					90
+#define DEGREES_180					180
+#define DEGREES_270					270
+#define DEGREES_360					360
+#define X_TOLERANCE 				45.0
+#define Y_TOLERANCE 				34.0
+
 
 /* USER CODE END PD */
 
@@ -50,7 +62,18 @@ SPI_HandleTypeDef hspi1;
 TIM_HandleTypeDef htim4;
 
 /* USER CODE BEGIN PV */
+int16_t dataI2S[100] = {0};
+enum LEDDirection {
+    NORTH,
+    EAST,
+    SOUTH,
+    WEST,
+	FLAT
+};
 
+LIS3DSH_DataScaled myData;
+uint8_t tiltedLed = 4;
+static uint8_t drdyFlag = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -62,6 +85,13 @@ static void MX_TIM4_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_I2S3_Init(void);
 /* USER CODE BEGIN PFP */
+uint8_t determineLED(LIS3DSH_DataScaled data);
+void updateDutycycle(uint8_t led, LIS3DSH_DataScaled data);
+bool isFlat(LIS3DSH_DataScaled data);
+void setSound(uint8_t led, LIS3DSH_DataScaled data);
+void acquireAndAverageData(LIS3DSH_DataScaled *newData);
+void startPWM(uint8_t led);
+
 
 /* USER CODE END PFP */
 
@@ -105,17 +135,52 @@ int main(void)
   MX_I2S3_Init();
   /* USER CODE BEGIN 2 */
 
+  HAL_TIM_Base_Start_IT(&htim4);
+  LIS3DSH_InitTypeDef myAccConfigDef;
+
+  myAccConfigDef.dataRate = LIS3DSH_DATARATE_25;
+  myAccConfigDef.fullScale = LIS3DSH_FULLSCALE_4;
+  myAccConfigDef.antiAliasingBW = LIS3DSH_FILTER_BW_50;
+  myAccConfigDef.enableAxes = LIS3DSH_XYZ_ENABLE;
+  myAccConfigDef.interruptEnable = true;
+  LIS3DSH_Init(&hspi1, &myAccConfigDef);
+
+  LIS3DSH_X_calibrate(-1000.0, 980.0);
+  LIS3DSH_Y_calibrate(-1020.0, 1040.0);
+  LIS3DSH_Z_calibrate(-920.0, 1040.0);
+
+  CS43L22_Init();
+
+    //Transmit empty data
+    HAL_I2S_Transmit_DMA(&hi2s3, (uint16_t *)dataI2S, 100);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-    /* USER CODE END WHILE */
+    while (1)
+    {
+        myData = LIS3DSH_GetDataScaled();
 
-    /* USER CODE BEGIN 3 */
-  }
-  /* USER CODE END 3 */
+        // Prepare dataRdy flag and average of coordinates
+        acquireAndAverageData(&myData);
+
+        if (drdyFlag)
+        {
+            // Determine LED direction
+            tiltedLed = determineLED(myData);
+
+            // Control LED based on direction
+            startPWM(tiltedLed);
+            setSound(tiltedLed, myData);
+            updateDutycycle(tiltedLed, myData);
+            drdyFlag = 0;
+        }
+
+        /* USER CODE END WHILE */
+
+        /* USER CODE BEGIN 3 */
+    }
+    /* USER CODE END 3 */
 }
 
 /**
@@ -414,6 +479,179 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+bool isFlat(LIS3DSH_DataScaled data)
+{
+    if (data.x > -X_TOLERANCE && data.x < X_TOLERANCE &&
+        data.y > -Y_TOLERANCE && data.y < Y_TOLERANCE) {
+            // The board is considered flat
+            return true;
+        }
+
+    // The board is not flat
+    return false;
+}
+
+
+float calculateTiltAngle(LIS3DSH_DataScaled data) {
+    return atan2(data.y, data.x) * 180.0 / M_PI;
+}
+
+void updateDutycycle(uint8_t led, LIS3DSH_DataScaled data)
+{
+    const float midpointAngles[4] = {DEGREES_90, DEGREES_180, DEGREES_270, DEGREES_360};
+    uint32_t dutyCycle;
+    float tiltAngle = calculateTiltAngle(data);
+
+    // Normalize angle to be between 0 and 360 degrees
+    tiltAngle = fmod(tiltAngle + 360, 360);
+    // Calculate angle difference from midpoint
+    float angleDifference = fabs(midpointAngles[led] - tiltAngle); // Adjust index to match array
+    // Calculate duty cycle as a fraction of 90 degrees,for value between 0 and ARR
+    dutyCycle = (uint32_t)((angleDifference / 90.0) * htim4.Instance->ARR);
+
+    // Set duty cycle based on the current LED
+    switch (led) {
+        case NORTH:
+            TIM4->CCR1 = dutyCycle;
+            break;
+        case EAST:
+            TIM4->CCR2 = dutyCycle;
+            break;
+        case SOUTH:
+            TIM4->CCR3 = dutyCycle;
+            break;
+        case WEST:
+            TIM4->CCR4 = dutyCycle;
+            break;
+        case FLAT:
+        	// Do nothing
+            break;
+    }
+
+}
+
+// Function to determine LED direction based on tilt angle
+uint8_t determineLED(LIS3DSH_DataScaled data) {
+    float tiltAngle = calculateTiltAngle(data);
+
+    // Normalize angle to be between 0 and 360 degrees
+    tiltAngle = fmod(tiltAngle + 360, 360);
+
+    // Divide the range into four equal parts and assign LEDs
+
+    if(isFlat(data))
+    {
+    	return FLAT;
+    }
+
+    if (tiltAngle >= 0 +  ANGLE_THRESHOLD && tiltAngle <= DEGREES_90) {
+        return NORTH;
+    } else if (tiltAngle >= DEGREES_90 +  ANGLE_THRESHOLD && tiltAngle <= DEGREES_180 ) {
+        return EAST;
+    } else if (tiltAngle >= DEGREES_180 +  ANGLE_THRESHOLD && tiltAngle <= DEGREES_270) {
+        return SOUTH;
+    } else if(tiltAngle >= DEGREES_270 +  ANGLE_THRESHOLD && tiltAngle <= DEGREES_360){
+        return WEST;
+    } else
+    {
+    	return FLAT;
+    }
+}
+
+void setSound(uint8_t led,LIS3DSH_DataScaled data)
+{
+    float midpointAngles[4] = {DEGREES_90, DEGREES_180, DEGREES_270, DEGREES_360};
+    float tiltAngle = calculateTiltAngle(data);
+
+    // Normalize angle to be between 0 and 360 degrees
+    tiltAngle = fmod(tiltAngle + DEGREES_360, DEGREES_360);
+    // Calculate angle difference from midpoint
+    float angleDifference = fabs(midpointAngles[led] - tiltAngle);
+
+    if (led != FLAT)
+    {
+        if(angleDifference <= 45)
+    	{
+    		CS43L22_Beep(C5, 200);
+    	}else
+    	{
+    		CS43L22_Beep(F5, 200);
+    	}
+    }else
+    {
+    	// Do nothing
+    }
+}
+
+void acquireAndAverageData(LIS3DSH_DataScaled *newData) {
+    static LIS3DSH_DataScaled accumulatedData = {0};
+    static uint8_t numValuesAveraged = 0;
+
+    // Accumulate new data
+    accumulatedData.x += newData->x;
+    accumulatedData.y += newData->y;
+    accumulatedData.z += newData->z;
+
+    numValuesAveraged++; // Increment the number of values averaged
+
+    // Check if enough values are averaged
+    if (numValuesAveraged >= NUM_VALUES_TO_AVERAGE) {
+        // Calculate the average
+        accumulatedData.x /= NUM_VALUES_TO_AVERAGE;
+        accumulatedData.y /= NUM_VALUES_TO_AVERAGE;
+        accumulatedData.z /= NUM_VALUES_TO_AVERAGE;
+
+        // Data is ready
+        drdyFlag = 1;
+
+        // Update newData with averaged data
+        newData->x = accumulatedData.x;
+        newData->y = accumulatedData.y;
+        newData->z = accumulatedData.z;
+
+        // Reset counter and accumulated data for the next batch
+        numValuesAveraged = 0;
+        accumulatedData = (LIS3DSH_DataScaled){0};
+    }
+}
+
+void startPWM(uint8_t led) {
+    switch (led) {
+        case NORTH:
+            HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
+            HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_2);
+            HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_3);
+            HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_4);
+            break;
+        case EAST:
+            HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_1);
+            HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
+            HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_3);
+            HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_4);
+            break;
+        case SOUTH:
+            HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_1);
+            HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_2);
+            HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
+            HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_4);
+            break;
+        case WEST:
+            HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_1);
+            HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_2);
+            HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_3);
+            HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_4);
+            break;
+        case FLAT:
+            HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_1);
+            HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_2);
+            HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_3);
+            HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_4);
+            break;
+        default:
+            // Do nothing
+            break;
+    }
+}
 
 /* USER CODE END 4 */
 
@@ -448,3 +686,4 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
+
