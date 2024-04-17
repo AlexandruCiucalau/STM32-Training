@@ -34,14 +34,14 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define ANGLE_THRESHOLD				10
-#define NUM_VALUES_TO_AVERAGE		8
+#define ANGLE_THRESHOLD					10
+#define NUM_VALUES_TO_AVERAGE				8
 #define DEGREES_90					90
 #define DEGREES_180					180
 #define DEGREES_270					270
 #define DEGREES_360					360
-#define X_TOLERANCE 				45.0
-#define Y_TOLERANCE 				34.0
+#define X_TOLERANCE 					45.0
+#define Y_TOLERANCE 					34.0
 
 
 /* USER CODE END PD */
@@ -68,7 +68,7 @@ enum LEDDirection {
     EAST,
     SOUTH,
     WEST,
-	FLAT
+    FLAT
 };
 
 LIS3DSH_DataScaled myData;
@@ -503,7 +503,7 @@ void updateDutycycle(uint8_t led, LIS3DSH_DataScaled data)
     float tiltAngle = calculateTiltAngle(data);
 
     // Normalize angle to be between 0 and 360 degrees
-    tiltAngle = fmod(tiltAngle + 360, 360);
+    tiltAngle = fmod(tiltAngle + DEGREES_360, DEGREES_360);
     // Calculate angle difference from midpoint
     float angleDifference = fabs(midpointAngles[led] - tiltAngle); // Adjust index to match array
     // Calculate duty cycle as a fraction of 90 degrees,for value between 0 and ARR
