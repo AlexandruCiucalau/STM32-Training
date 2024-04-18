@@ -34,16 +34,12 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define ANGLE_THRESHOLD					10
-#define NUM_VALUES_TO_AVERAGE				8
-#define DEGREES_90					90
-#define DEGREES_180					180
-#define DEGREES_270					270
-#define DEGREES_360					360
-#define X_TOLERANCE 					45.0
-#define Y_TOLERANCE 					34.0
-
-
+#define NUM_VALUES_TO_AVERAGE		4
+#define X_TOLERANCE 				45.0
+#define Y_TOLERANCE 				34.0
+#define ABS(x) 						((x) < 0 ? -(x) : (x))
+#define MAX_ABS(x, y) 				(ABS(x) > ABS(y) ? ABS(x) : ABS(y))
+#define MAX_ABS_COORDINATES			1000.0
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -68,12 +64,11 @@ enum LEDDirection {
     EAST,
     SOUTH,
     WEST,
-    FLAT
+	FLAT
 };
 
 LIS3DSH_DataScaled myData;
 uint8_t tiltedLed = 4;
-static uint8_t drdyFlag = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -89,7 +84,7 @@ uint8_t determineLED(LIS3DSH_DataScaled data);
 void updateDutycycle(uint8_t led, LIS3DSH_DataScaled data);
 bool isFlat(LIS3DSH_DataScaled data);
 void setSound(uint8_t led, LIS3DSH_DataScaled data);
-void acquireAndAverageData(LIS3DSH_DataScaled *newData);
+bool acquireAndAverageData(LIS3DSH_DataScaled *newData);
 void startPWM(uint8_t led);
 
 
@@ -161,10 +156,7 @@ int main(void)
     {
         myData = LIS3DSH_GetDataScaled();
 
-        // Prepare dataRdy flag and average of coordinates
-        acquireAndAverageData(&myData);
-
-        if (drdyFlag)
+        if (acquireAndAverageData(&myData))
         {
             // Determine LED direction
             tiltedLed = determineLED(myData);
@@ -173,7 +165,6 @@ int main(void)
             startPWM(tiltedLed);
             setSound(tiltedLed, myData);
             updateDutycycle(tiltedLed, myData);
-            drdyFlag = 0;
         }
 
         /* USER CODE END WHILE */
@@ -496,18 +487,14 @@ float calculateTiltAngle(LIS3DSH_DataScaled data) {
     return atan2(data.y, data.x) * 180.0 / M_PI;
 }
 
-void updateDutycycle(uint8_t led, LIS3DSH_DataScaled data)
-{
-    const float midpointAngles[4] = {DEGREES_90, DEGREES_180, DEGREES_270, DEGREES_360};
+void updateDutycycle(uint8_t led, LIS3DSH_DataScaled data) {
     uint32_t dutyCycle;
-    float tiltAngle = calculateTiltAngle(data);
 
-    // Normalize angle to be between 0 and 360 degrees
-    tiltAngle = fmod(tiltAngle + DEGREES_360, DEGREES_360);
-    // Calculate angle difference from midpoint
-    float angleDifference = fabs(midpointAngles[led] - tiltAngle); // Adjust index to match array
-    // Calculate duty cycle as a fraction of 90 degrees,for value between 0 and ARR
-    dutyCycle = (uint32_t)((angleDifference / 90.0) * htim4.Instance->ARR);
+    // Determine which axis to use for duty cycle calculation
+    float max_abs = MAX_ABS(data.x, data.y);
+
+    // Calculate duty cycle as a fraction of the maximum absolute value (either data.x or data.y)
+    dutyCycle = (uint32_t)((max_abs / MAX_ABS_COORDINATES) * htim4.Instance->ARR);
 
     // Set duty cycle based on the current LED
     switch (led) {
@@ -524,18 +511,14 @@ void updateDutycycle(uint8_t led, LIS3DSH_DataScaled data)
             TIM4->CCR4 = dutyCycle;
             break;
         case FLAT:
-        	// Do nothing
+            // Do nothing
             break;
     }
-
 }
+
 
 // Function to determine LED direction based on tilt angle
 uint8_t determineLED(LIS3DSH_DataScaled data) {
-    float tiltAngle = calculateTiltAngle(data);
-
-    // Normalize angle to be between 0 and 360 degrees
-    tiltAngle = fmod(tiltAngle + 360, 360);
 
     // Divide the range into four equal parts and assign LEDs
 
@@ -544,48 +527,45 @@ uint8_t determineLED(LIS3DSH_DataScaled data) {
     	return FLAT;
     }
 
-    if (tiltAngle >= 0 +  ANGLE_THRESHOLD && tiltAngle <= DEGREES_90) {
-        return NORTH;
-    } else if (tiltAngle >= DEGREES_90 +  ANGLE_THRESHOLD && tiltAngle <= DEGREES_180 ) {
-        return EAST;
-    } else if (tiltAngle >= DEGREES_180 +  ANGLE_THRESHOLD && tiltAngle <= DEGREES_270) {
-        return SOUTH;
-    } else if(tiltAngle >= DEGREES_270 +  ANGLE_THRESHOLD && tiltAngle <= DEGREES_360){
-        return WEST;
-    } else
+    float x_abs = ABS(data.x);
+    float y_abs = ABS(data.y);
+
+    if (y_abs > x_abs)
     {
-    	return FLAT;
+        if (data.y < - Y_TOLERANCE) {
+            return WEST;
+        } else {
+            return EAST;
+        }
+    } else {
+        if (data.x < -X_TOLERANCE) {
+            return SOUTH;
+        } else {
+            return NORTH;
+        }
     }
 }
 
 void setSound(uint8_t led,LIS3DSH_DataScaled data)
 {
-    float midpointAngles[4] = {DEGREES_90, DEGREES_180, DEGREES_270, DEGREES_360};
-    float tiltAngle = calculateTiltAngle(data);
-
-    // Normalize angle to be between 0 and 360 degrees
-    tiltAngle = fmod(tiltAngle + DEGREES_360, DEGREES_360);
-    // Calculate angle difference from midpoint
-    float angleDifference = fabs(midpointAngles[led] - tiltAngle);
-
-    if (led != FLAT)
+    float max_abs = MAX_ABS(data.x, data.y);
+    if(led != FLAT)
     {
-        if(angleDifference <= 45)
-    	{
-    		CS43L22_Beep(C5, 200);
-    	}else
-    	{
-    		CS43L22_Beep(F5, 200);
-    	}
-    }else
-    {
-    	// Do nothing
+	    if (max_abs < 500)
+	    {
+  		  CS43L22_Beep(C5, 100);
+	    }else
+	    {
+  		  CS43L22_Beep(F5, 100);
+	    }
     }
 }
 
-void acquireAndAverageData(LIS3DSH_DataScaled *newData) {
+bool acquireAndAverageData(LIS3DSH_DataScaled *newData) {
     static LIS3DSH_DataScaled accumulatedData = {0};
     static uint8_t numValuesAveraged = 0;
+
+ //   static uint8_t drdyFlag=0;
 
     // Accumulate new data
     accumulatedData.x += newData->x;
@@ -597,22 +577,18 @@ void acquireAndAverageData(LIS3DSH_DataScaled *newData) {
     // Check if enough values are averaged
     if (numValuesAveraged >= NUM_VALUES_TO_AVERAGE) {
         // Calculate the average
-        accumulatedData.x /= NUM_VALUES_TO_AVERAGE;
-        accumulatedData.y /= NUM_VALUES_TO_AVERAGE;
-        accumulatedData.z /= NUM_VALUES_TO_AVERAGE;
-
-        // Data is ready
-        drdyFlag = 1;
-
         // Update newData with averaged data
-        newData->x = accumulatedData.x;
-        newData->y = accumulatedData.y;
-        newData->z = accumulatedData.z;
+        newData->x = accumulatedData.x / NUM_VALUES_TO_AVERAGE;
+        newData->y = accumulatedData.y / NUM_VALUES_TO_AVERAGE;
+        newData->z = accumulatedData.z / NUM_VALUES_TO_AVERAGE;
 
         // Reset counter and accumulated data for the next batch
         numValuesAveraged = 0;
         accumulatedData = (LIS3DSH_DataScaled){0};
+        return true;
+
     }
+    return false;
 }
 
 void startPWM(uint8_t led) {
@@ -686,4 +662,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
