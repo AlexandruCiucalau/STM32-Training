@@ -34,10 +34,10 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define NUM_VALUES_TO_AVERAGE		4
+#define NUM_VALUES_TO_AVERAGE			4
 #define X_TOLERANCE 				45.0
 #define Y_TOLERANCE 				34.0
-#define ABS(x) 						((x) < 0 ? -(x) : (x))
+#define ABS(x) 					((x) < 0 ? -(x) : (x))
 #define MAX_ABS(x, y) 				(ABS(x) > ABS(y) ? ABS(x) : ABS(y))
 #define MAX_ABS_COORDINATES			1000.0
 /* USER CODE END PD */
@@ -64,7 +64,7 @@ enum LEDDirection {
     EAST,
     SOUTH,
     WEST,
-	FLAT
+    FLAT
 };
 
 LIS3DSH_DataScaled myData;
@@ -482,10 +482,6 @@ bool isFlat(LIS3DSH_DataScaled data)
     return false;
 }
 
-
-float calculateTiltAngle(LIS3DSH_DataScaled data) {
-    return atan2(data.y, data.x) * 180.0 / M_PI;
-}
 
 void updateDutycycle(uint8_t led, LIS3DSH_DataScaled data) {
     uint32_t dutyCycle;
