@@ -169,9 +169,8 @@ int main(void)
                 startPWM(tiltedLed);
                 setSound(tiltedLed, myData);
                 updateDutycycle(tiltedLed, myData);
-
             }
-}
+	}
 
         /* USER CODE END WHILE */
 
