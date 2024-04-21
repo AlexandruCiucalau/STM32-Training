@@ -69,6 +69,7 @@ enum LEDDirection {
 
 LIS3DSH_DataScaled myData;
 uint8_t tiltedLed = 4;
+extern bool dataRdy;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -154,18 +155,23 @@ int main(void)
   /* USER CODE BEGIN WHILE */
     while (1)
     {
-        myData = LIS3DSH_GetDataScaled();
+    	if(dataRdy)
+    	{
+    	    dataRdy = false;
+            myData = LIS3DSH_GetDataScaled();
 
-        if (acquireAndAverageData(&myData))
-        {
-            // Determine LED direction
-            tiltedLed = determineLED(myData);
+            if (acquireAndAverageData(&myData))
+            {
+                // Determine LED direction
+                tiltedLed = determineLED(myData);
 
-            // Control LED based on direction
-            startPWM(tiltedLed);
-            setSound(tiltedLed, myData);
-            updateDutycycle(tiltedLed, myData);
-        }
+                // Control LED based on direction
+                startPWM(tiltedLed);
+                setSound(tiltedLed, myData);
+                updateDutycycle(tiltedLed, myData);
+
+            }
+}
 
         /* USER CODE END WHILE */
 
@@ -658,3 +664,4 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
+
